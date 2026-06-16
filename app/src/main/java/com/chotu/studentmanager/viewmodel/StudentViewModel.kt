@@ -7,22 +7,27 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.chotu.studentmanager.data.entity.StudentEntity
 import com.chotu.studentmanager.repository.StudentRepository
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class StudentViewModel(
     private val repository: StudentRepository
 ) : ViewModel() {
-    var students by mutableStateOf<List<StudentEntity>>(emptyList())
-        private set
+
+    val students: StateFlow<List<StudentEntity>> =
+        repository.getAllStudents()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
 
     var selectedStudent by mutableStateOf<StudentEntity?>(null)
         private set
 
-    fun loadStudents() {
-        viewModelScope.launch {
-            students = repository.getAllStudents()
-        }
-    }
 
     fun insertStudent(
         name: String,
@@ -37,7 +42,7 @@ class StudentViewModel(
                     semester = semester
                 )
             )
-            loadStudents()
+
         }
     }
 
@@ -46,7 +51,6 @@ class StudentViewModel(
     ) {
         viewModelScope.launch {
             repository.deleteStudent(student)
-            loadStudents()
         }
     }
 
@@ -60,7 +64,6 @@ class StudentViewModel(
         viewModelScope.launch {
             repository.updateStudent(student)
             selectedStudent = null
-            loadStudents()
         }
     }
 }

@@ -40,6 +40,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -87,8 +88,9 @@ fun StudentScreen(modifier: Modifier = Modifier) {
     val repository = remember { StudentRepository(database.studentDao()) }
     val factory = remember { StudentViewModelFactory(repository) }
     val viewModel: StudentViewModel = viewModel(factory = factory)
+    val students by viewModel.students.collectAsState()
 
-    LaunchedEffect(Unit) { viewModel.loadStudents() }
+//    LaunchedEffect(Unit) { viewModel.loadStudents() }
 
     Box(
         modifier = modifier
@@ -235,10 +237,10 @@ fun StudentScreen(modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                val courses = viewModel.students.map { it.course }.toSet().size
+                val courses = students.map { it.course }.toSet().size
 
                 listOf(
-                    "Total Students" to viewModel.students.size,
+                    "Total Students" to students.size,
                     "Courses" to courses
                 ).forEach { (label, count) ->
                     Card(
@@ -273,8 +275,8 @@ fun StudentScreen(modifier: Modifier = Modifier) {
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(viewModel.students.size) { index ->
-                    val student = viewModel.students[index]
+                items(students.size) { index ->
+                    val student = students[index]
                     StudentCard(
                         student = student,
                         onEdit = {
@@ -431,206 +433,203 @@ fun StudentCard(
     }
 }
 
-@Composable
-fun StudentScreen1(modifier: Modifier = Modifier) {
-    var name by remember {
-        mutableStateOf("")
-    }
-
-    var course by remember {
-        mutableStateOf("")
-    }
-
-    var semester by remember {
-        mutableStateOf("")
-    }
-
-    val context = LocalContext.current
-
-    val database = remember {
-        DatabaseProvider.getDatabase(context)
-    }
-
-    val repository = remember {
-        StudentRepository(database.studentDao())
-    }
-
-    val factory = remember {
-        StudentViewModelFactory(repository)
-    }
-
-    val viewModel: StudentViewModel = viewModel(
-        factory = factory
-    )
-
-    LaunchedEffect(Unit) {
-        viewModel.loadStudents()
-    }
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-
-        Text(
-            text = "Student Manager",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = name,
-            onValueChange = {
-                name = it
-            },
-            label = {
-                Text("Student Name")
-            }
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = course,
-            onValueChange = {
-                course = it
-            },
-            label = {
-                Text("Course")
-            }
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = semester,
-            onValueChange = {
-                semester = it
-            },
-            label = {
-                Text("Semester")
-            }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-
-                val semesterValue = semester.toIntOrNull()
-
-                if (
-                    name.isNotBlank() &&
-                    course.isNotBlank() &&
-                    semesterValue != null
-                ) {
-                    if (viewModel.selectedStudent == null) {
-                        viewModel.insertStudent(
-                            name = name,
-                            course = course,
-                            semester = semesterValue
-                        )
-                    } else {
-                        viewModel.updateStudent(
-                            viewModel.selectedStudent!!.copy(
-                                name = name,
-                                course = course,
-                                semester = semesterValue
-                            )
-                        )
-                    }
-                    name = ""
-                    course = ""
-                    semester = ""
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                if (viewModel.selectedStudent == null)
-                    "Add Student"
-                else
-                    "Update Student"
-            )
-        }
-
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Text(
-            text = "${viewModel.students.size} Students",
-            fontWeight = FontWeight.Bold
-        )
-
-        LazyColumn(
-            modifier = Modifier.weight(1f)
-        ) {
-            items(viewModel.students.size) { index ->
-                val student = viewModel.students[index]
-
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(
-
-                        ) {
-                            Text(
-                                student.name,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                student.course,
-
-                                )
-                            Text(
-                                "Semester ${student.semester}"
-                            )
-                        }
-
-                        Row {
-                            Button(onClick = {
-                                viewModel.selectedStudent(student)
-                                name = student.name
-                                course = student.course
-                                semester = student.semester.toString()
-                            }) {
-                                Text("Edit")
-                            }
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-
-                            Button(
-                                onClick = {
-                                    viewModel.deleteStudent(
-                                        student
-                                    )
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.Red
-                                )
-                            ) {
-                                Text("Delete")
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+//@Composable
+//fun StudentScreen1(modifier: Modifier = Modifier) {
+//    var name by remember {
+//        mutableStateOf("")
+//    }
+//
+//    var course by remember {
+//        mutableStateOf("")
+//    }
+//
+//    var semester by remember {
+//        mutableStateOf("")
+//    }
+//
+//    val context = LocalContext.current
+//
+//    val database = remember {
+//        DatabaseProvider.getDatabase(context)
+//    }
+//
+//    val repository = remember {
+//        StudentRepository(database.studentDao())
+//    }
+//
+//    val factory = remember {
+//        StudentViewModelFactory(repository)
+//    }
+//
+//    val viewModel: StudentViewModel = viewModel(
+//        factory = factory
+//    )
+//
+//
+//    Column(
+//        modifier = modifier
+//            .fillMaxSize()
+//            .padding(16.dp)
+//    ) {
+//
+//        Text(
+//            text = "Student Manager",
+//            fontSize = 28.sp,
+//            fontWeight = FontWeight.Bold
+//        )
+//
+//        Spacer(modifier = Modifier.height(16.dp))
+//
+//        OutlinedTextField(
+//            value = name,
+//            onValueChange = {
+//                name = it
+//            },
+//            label = {
+//                Text("Student Name")
+//            }
+//        )
+//
+//        Spacer(modifier = Modifier.height(8.dp))
+//
+//        OutlinedTextField(
+//            value = course,
+//            onValueChange = {
+//                course = it
+//            },
+//            label = {
+//                Text("Course")
+//            }
+//        )
+//
+//        Spacer(modifier = Modifier.height(8.dp))
+//
+//        OutlinedTextField(
+//            value = semester,
+//            onValueChange = {
+//                semester = it
+//            },
+//            label = {
+//                Text("Semester")
+//            }
+//        )
+//
+//        Spacer(modifier = Modifier.height(16.dp))
+//
+//        Button(
+//            onClick = {
+//
+//                val semesterValue = semester.toIntOrNull()
+//
+//                if (
+//                    name.isNotBlank() &&
+//                    course.isNotBlank() &&
+//                    semesterValue != null
+//                ) {
+//                    if (viewModel.selectedStudent == null) {
+//                        viewModel.insertStudent(
+//                            name = name,
+//                            course = course,
+//                            semester = semesterValue
+//                        )
+//                    } else {
+//                        viewModel.updateStudent(
+//                            viewModel.selectedStudent!!.copy(
+//                                name = name,
+//                                course = course,
+//                                semester = semesterValue
+//                            )
+//                        )
+//                    }
+//                    name = ""
+//                    course = ""
+//                    semester = ""
+//                }
+//            },
+//            modifier = Modifier.fillMaxWidth()
+//        ) {
+//            Text(
+//                if (viewModel.selectedStudent == null)
+//                    "Add Student"
+//                else
+//                    "Update Student"
+//            )
+//        }
+//
+//
+//        Spacer(modifier = Modifier.height(20.dp))
+//
+//        Text(
+//            text = "${students.size} Students",
+//            fontWeight = FontWeight.Bold
+//        )
+//
+//        LazyColumn(
+//            modifier = Modifier.weight(1f)
+//        ) {
+//            items(viewModel.students.size) { index ->
+//                val student = viewModel.students[index]
+//
+//                Card(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .padding(vertical = 4.dp)
+//                ) {
+//                    Row(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .padding(12.dp),
+//                        horizontalArrangement = Arrangement.SpaceBetween,
+//                        verticalAlignment = Alignment.CenterVertically
+//                    ) {
+//                        Column(
+//
+//                        ) {
+//                            Text(
+//                                student.name,
+//                                fontWeight = FontWeight.Bold
+//                            )
+//                            Text(
+//                                student.course,
+//
+//                                )
+//                            Text(
+//                                "Semester ${student.semester}"
+//                            )
+//                        }
+//
+//                        Row {
+//                            Button(onClick = {
+//                                viewModel.selectedStudent(student)
+//                                name = student.name
+//                                course = student.course
+//                                semester = student.semester.toString()
+//                            }) {
+//                                Text("Edit")
+//                            }
+//
+//                            Spacer(modifier = Modifier.width(8.dp))
+//
+//
+//                            Button(
+//                                onClick = {
+//                                    viewModel.deleteStudent(
+//                                        student
+//                                    )
+//                                },
+//                                colors = ButtonDefaults.buttonColors(
+//                                    containerColor = Color.Red
+//                                )
+//                            ) {
+//                                Text("Delete")
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
 
 @Preview(showBackground = true)

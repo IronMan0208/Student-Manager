@@ -2,6 +2,7 @@ package com.chotu.studentmanager.repository
 
 import com.chotu.studentmanager.data.dao.StudentDao
 import com.chotu.studentmanager.data.entity.StudentEntity
+import kotlinx.coroutines.flow.Flow
 
 class StudentRepository(
     private val studentDao: StudentDao
@@ -20,7 +21,7 @@ class StudentRepository(
         studentDao.updateStudent(student)
     }
 
-    suspend fun getAllStudents(): List<StudentEntity> {
+    fun getAllStudents(): Flow<List<StudentEntity>> {
         return studentDao.getAllStudents()
     }
 }
